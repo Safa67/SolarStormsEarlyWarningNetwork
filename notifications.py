@@ -17,11 +17,8 @@ from sqlalchemy.orm import Session
 
 from database import NotificationLog
 
-TELEGRAM_TOKEN = os.environ.get(
-    "TELEGRAM_BOT_TOKEN",
-    "8397772098:AAEnp5xc549-h23NxGnpUOg6RMKm_ozDlu8"
-)
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "7224036971")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 TSI = timezone(timedelta(hours=3))
 

@@ -11,7 +11,7 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 
-NASA_API_KEY    = os.environ.get("NASA_API_KEY", "DEMO_KEY")
+NASA_API_KEY    = os.environ.get("NASA_API_KEY")
 NOAA_MAG_URL    = "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json"
 NOAA_PLASMA_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-1-day.json"
 NOAA_KP_URL     = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"

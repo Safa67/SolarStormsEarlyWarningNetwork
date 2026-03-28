@@ -18,6 +18,11 @@ Run:
 ============================================================
 """
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
