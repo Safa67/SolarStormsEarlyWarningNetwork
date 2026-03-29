@@ -528,29 +528,49 @@ def full_analysis() -> dict:
 
     # Map weighted score back to level
     if weighted_score >= 3.8:
-        final_level = "EXTREME"
+        consolidated_level = "EXTREME"
     elif weighted_score >= 3.2:
-        final_level = "CRITICAL"
+        consolidated_level = "CRITICAL"
     elif weighted_score >= 2.2:
-        final_level = "HIGH"
+        consolidated_level = "HIGH"
     elif weighted_score >= 1.2:
-        final_level = "MEDIUM"
+        consolidated_level = "MEDIUM"
     elif weighted_score >= 0.5:
-        final_level = "LOW"
+        consolidated_level = "LOW"
     else:
-        final_level = "SAFE"
+        consolidated_level = "SAFE"
 
-    # Override: if ANY source is CRITICAL, final is at least HIGH
-    if any(lvl == "CRITICAL" for lvl in source_levels.values()):
-        if LEVEL_ORDER.index(final_level) < LEVEL_ORDER.index("HIGH"):
-            final_level = "HIGH"
+    # ── 72-Hour Forecast Logic ──
+    # Forecast level is the MAXIMUM of all sources (Worst Case Scenario)
+    # because it predicts the upcoming 3 days.
+    forecast_level = "SAFE"
+    reason = "Önümüzdeki 72 saat için güneş aktivitesi sakin görünüyor."
+    
+    # Priority order: CME > NOAA Live > Kp > Flare
+    # If a CME is heading to Earth, it sets the forecast.
+    if highest_cme != "SAFE":
+        forecast_level = highest_cme
+        reason = f"NASA DONKI: Dünya yönlü kütle atımı (CME) tahmini ({highest_cme}) seviyesinde alarm veriyor."
+    elif noaa_level != "SAFE":
+        forecast_level = noaa_level
+        reason = f"NOAA: Anlık rüzgar verilerindeki sapmalar ({noaa_level}) seviyesinde risk oluşturuyor."
+    elif kp_level != "SAFE":
+        forecast_level = kp_level
+        reason = f"Kp-Index: Jeomanyetik aktivite şu an ({kp_level}) seviyesinde seyrediyor."
+    elif highest_flr != "SAFE":
+        forecast_level = highest_flr
+        reason = f"Güneş Patlaması: Son 72 saatteki X/M tipi patlamalar ({highest_flr}) seviyesinde iyonosfer etkisine sebep olabilir."
 
-    determiner = top_source
+    # Final Override for EXTREME
+    if any(lvl == "EXTREME" for lvl in source_levels.values()):
+        forecast_level = "EXTREME"
 
     return {
         "timestamp":   datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-        "final_level": final_level,
-        "determiner":  determiner,
+        "final_level": consolidated_level, # Kept for backward compatibility
+        "forecast_level": forecast_level,
+        "forecast_description": reason,
+        "determiner":  top_source,
         "noaa":        noaa,
         "kp":          kp,
         "cme_list":    cme_list,
