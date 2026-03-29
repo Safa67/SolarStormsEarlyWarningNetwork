@@ -29,6 +29,9 @@ TSI = timezone(timedelta(hours=3))
 
 def send_telegram(text: str) -> bool:
     """Send a message via Telegram Bot API. Returns True on success."""
+    if not TELEGRAM_TOKEN:
+        print("[Telegram] No TELEGRAM_BOT_TOKEN configured — skipping.")
+        return False
     if not TELEGRAM_CHAT_ID:
         print("[Telegram] No TELEGRAM_CHAT_ID configured — skipping.")
         return False
@@ -109,14 +112,7 @@ def check_tier1(db: Session, cme_list: list):
         targets = cme.get("targets", "")
         is_gb = cme.get("is_earth_gb", False)
 
-        # Estimate hours until arrival (rough)
-        eta_text = ""
-        try:
-            # Parse the local arrival string "DD Month HH:MM Local"
-            # We can't easily parse this back, so just show it as-is
-            eta_text = f"\n⏳ Tahmini varış: {arrival}"
-        except:
-            pass
+        eta_text = f"\n⏳ Tahmini varış: {arrival}"
 
         gb_text = " (Sıyırma Darbesi)" if is_gb else " (Doğrudan Etki Riski)"
 
@@ -173,19 +169,15 @@ def check_tier2(db: Session, cme_list: list):
         arrival_str = cme.get("estimated_arrival", "")
 
         # Parse "DD Month HH:MM TSİ" format back to datetime
-        try:
-            # Try various formats
-            for fmt in ["%d %B %H:%M TSİ", "%d %b %H:%M TSİ", "%d %B %H:%M Local", "%d %b %H:%M Local"]:
-                try:
-                    parsed = datetime.strptime(arrival_str, fmt)
-                    # Add current year
-                    parsed = parsed.replace(year=datetime.now().year, tzinfo=TSI)
-                    hours_remaining = (parsed - datetime.now(TSI)).total_seconds() / 3600
-                    break
-                except ValueError:
-                    hours_remaining = None
-        except:
-            hours_remaining = None
+        hours_remaining = None
+        for fmt in ["%d %B %H:%M TSİ", "%d %b %H:%M TSİ", "%d %B %H:%M Local", "%d %b %H:%M Local"]:
+            try:
+                parsed = datetime.strptime(arrival_str, fmt)
+                parsed = parsed.replace(year=datetime.now().year, tzinfo=TSI)
+                hours_remaining = (parsed - datetime.now(TSI)).total_seconds() / 3600
+                break
+            except ValueError:
+                continue
 
         if hours_remaining is None or hours_remaining > 24 or hours_remaining < 0:
             continue

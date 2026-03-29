@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import asyncio
+import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any
@@ -38,7 +39,7 @@ from database import (
     NoaaMeasurement, CmeEvent, ThreatHistory,
     KpIndex, SolarFlare, NotificationLog
 )
-from veri_motoru import full_analysis
+from veri_motoru import full_analysis, LEVEL_ORDER
 from notifications import check_all_notifications
 
 # ── Connection Manager (WebSocket) ──────────────────────
@@ -70,33 +71,33 @@ connection_manager = ConnectionManager()
 latest_analysis: dict = {}
 
 
+# ── Single Scan (shared logic) ───────────────────────────
+async def _run_single_scan(label: str = "Scan"):
+    """Fetch data, save to DB, check notifications. Returns result dict."""
+    global latest_analysis
+    result = await asyncio.to_thread(full_analysis)
+    latest_analysis = result
+
+    def _db_save_and_notify():
+        db = next(get_db())
+        try:
+            _save_to_db(db, result)
+            check_all_notifications(db, result)
+        finally:
+            db.close()
+    await asyncio.to_thread(_db_save_and_notify)
+    print(f"[{label} OK] {result.get('timestamp', '?')} — level: {result.get('final_level')}")
+    return result
+
+
 # ── Background Task ──────────────────────────────────────
 async def periodic_scan():
     """Fetches data every 10 mins, saves to DB, broadcasts to WS."""
     while True:
-        global latest_analysis
         try:
-            # Run blocking HTTP calls in a thread so the event loop stays alive
-            result = await asyncio.to_thread(full_analysis)
-            latest_analysis = result
-
-            # Save to DB + check notifications (also blocking I/O)
-            def _db_save_and_notify():
-                db = next(get_db())
-                try:
-                    _save_to_db(db, result)
-                    check_all_notifications(db, result)
-                finally:
-                    db.close()
-            await asyncio.to_thread(_db_save_and_notify)
-
-            # Broadcast to WebSocket clients
+            result = await _run_single_scan("Scan")
             await connection_manager.broadcast(result)
-
-            print(f"[Scan OK] {result.get('timestamp', '?')} — level: {result.get('final_level')}")
-
         except Exception as e:
-            import traceback
             print(f"[Scan Error] {e}")
             traceback.print_exc()
 
@@ -163,7 +164,7 @@ def _save_to_db(db: Session, result: dict):
             ))
 
     # Combined threat record — uses the weighted result from full_analysis()
-    level_order = ["SAFE","UNKNOWN","LOW","MEDIUM","HIGH","CRITICAL"]
+    level_order = LEVEL_ORDER
     db.add(ThreatHistory(
         noaa_level  = result.get("noaa", {}).get("level", "UNKNOWN"),
         cme_level   = max(
@@ -187,24 +188,11 @@ def _save_to_db(db: Session, result: dict):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_database()
-    # Initial scan — run in thread so startup doesn't block
-    global latest_analysis
     try:
-        latest_analysis = await asyncio.to_thread(full_analysis)
-        def _db_save_and_notify():
-            db = next(get_db())
-            try:
-                _save_to_db(db, latest_analysis)
-                check_all_notifications(db, latest_analysis)
-            finally:
-                db.close()
-        await asyncio.to_thread(_db_save_and_notify)
-        print(f"[Startup OK] {latest_analysis.get('timestamp', '?')} — level: {latest_analysis.get('final_level')}")
+        await _run_single_scan("Startup")
     except Exception as e:
-        import traceback
         print(f"[Startup Scan Error] {e}")
         traceback.print_exc()
-    # Start background loop
     task = asyncio.create_task(periodic_scan())
     yield
     task.cancel()
@@ -402,6 +390,5 @@ def notification_history(
     ]
 
 # ── Static Frontend (MUST BE LAST — catches all /app/* routes) ──
-import os
 if os.path.isdir("frontend"):
     app.mount("/app", StaticFiles(directory="frontend", html=True), name="frontend")

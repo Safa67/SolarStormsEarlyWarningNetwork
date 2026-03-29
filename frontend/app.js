@@ -441,7 +441,108 @@ async function updateChart() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+    generateStarfield();
+    init();
+});
+
+// ═══ Starfield Generator ═══
+function generateStarfield() {
+    const container = document.getElementById('starfield');
+    if (!container) return;
+
+    const starCount = 220;
+    const colors = [
+        'rgba(255, 255, 255,',       // Pure white
+        'rgba(200, 220, 255,',       // Cool blue-white  
+        'rgba(180, 200, 255,',       // Blue
+        'rgba(255, 240, 200,',       // Warm yellow
+        'rgba(255, 200, 180,',       // Warm orange (rare)
+    ];
+
+    for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Size tiers: 70% small, 20% medium, 10% large
+        const rand = Math.random();
+        let size, opacity, glow;
+        if (rand < 0.7) {
+            // Small stars
+            size = 1 + Math.random() * 1.5;  // 1-2.5px
+            opacity = 0.3 + Math.random() * 0.4;
+            glow = '';
+        } else if (rand < 0.9) {
+            // Medium stars
+            size = 2 + Math.random() * 1.5;  // 2-3.5px
+            opacity = 0.5 + Math.random() * 0.4;
+            glow = `0 0 ${size * 2}px rgba(200, 220, 255, 0.3)`;
+        } else {
+            // Large bright stars
+            size = 3 + Math.random() * 2;  // 3-5px
+            opacity = 0.7 + Math.random() * 0.3;
+            glow = `0 0 ${size * 3}px rgba(200, 220, 255, 0.5), 0 0 ${size * 6}px rgba(100, 150, 255, 0.2)`;
+        }
+
+        // Random color (more whites, fewer warm tones)
+        const colorRand = Math.random();
+        let color;
+        if (colorRand < 0.5) color = colors[0];
+        else if (colorRand < 0.75) color = colors[1];
+        else if (colorRand < 0.88) color = colors[2];
+        else if (colorRand < 0.96) color = colors[3];
+        else color = colors[4];
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.background = `${color}${opacity})`;
+        if (glow) star.style.boxShadow = glow;
+
+        // Random twinkle animation (60% of stars twinkle)
+        if (Math.random() < 0.6) {
+            const twinkleClass = `twinkle-${Math.ceil(Math.random() * 4)}`;
+            star.classList.add(twinkleClass);
+            star.style.animationDelay = `${Math.random() * 5}s`;
+        }
+
+        container.appendChild(star);
+    }
+
+    // Shooting stars — one every 8-15 seconds
+    setInterval(() => {
+        spawnShootingStar(container);
+    }, 8000 + Math.random() * 7000);
+}
+
+function spawnShootingStar(container) {
+    const star = document.createElement('div');
+    star.classList.add('shooting-star');
+
+    star.style.left = `${10 + Math.random() * 60}%`;
+    star.style.top = `${5 + Math.random() * 40}%`;
+
+    // Random direction
+    const angle = 20 + Math.random() * 30; // degrees
+    const distance = 200 + Math.random() * 300;
+    star.style.setProperty('--shoot-x', `${distance}px`);
+    star.style.setProperty('--shoot-y', `${Math.tan(angle * Math.PI / 180) * distance}px`);
+
+    container.appendChild(star);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        star.classList.add('active');
+    });
+
+    // Remove after animation
+    setTimeout(() => star.remove(), 1500);
+}
 
 // CME Details
 const colorMap = {
@@ -449,31 +550,35 @@ const colorMap = {
     "HIGH": "var(--accent-high)", "CRITICAL": "var(--accent-crit)", "UNKNOWN": "var(--accent-unknown)"
 };
 
+const markerContrastMap = {
+    "SAFE": "#22c55e", "LOW": "#3b82f6", "MEDIUM": "#a855f7",
+    "HIGH": "#000000", "CRITICAL": "#ffffff", "UNKNOWN": "#64748b"
+};
+
+function positionMarker(marker, lat, lon, level) {
+    marker.style.backgroundColor = markerContrastMap[level] || markerContrastMap["UNKNOWN"];
+    marker.style.border = level === "CRITICAL" ? "3px solid #ef4444" : "3px solid #ffffff";
+    marker.style.boxShadow = "0 0 15px rgba(0,0,0,0.9)";
+    if (!isNaN(lon) && !isNaN(lat)) {
+        let top = 50 - (lat / 90) * 50;
+        let left = 50 + (lon / 90) * 50;
+        top = Math.max(0, Math.min(100, top));
+        left = Math.max(0, Math.min(100, left));
+        marker.style.top = `${top}%`;
+        marker.style.left = `${left}%`;
+        marker.style.display = 'block';
+    } else {
+        marker.style.display = 'none';
+    }
+}
+
 function showCmeDetails(cme) {
     cmeDetailTitle.innerText = `CME: ${cme.cme_id || t('unknown')}`;
     const lon = parseFloat(cme.longitude);
     const lat = parseFloat(cme.latitude);
     const textColor = colorMap[cme.level] || colorMap["UNKNOWN"];
     
-    const markerContrastMap = {
-        "SAFE": "#22c55e", "LOW": "#3b82f6", "MEDIUM": "#a855f7",
-        "HIGH": "#000000", "CRITICAL": "#ffffff", "UNKNOWN": "#64748b"
-    };
-    cmeMarker.style.backgroundColor = markerContrastMap[cme.level] || markerContrastMap["UNKNOWN"];
-    cmeMarker.style.border = cme.level === "CRITICAL" ? "3px solid #ef4444" : "3px solid #ffffff";
-    cmeMarker.style.boxShadow = "0 0 15px rgba(0,0,0,0.9)";
-    
-    if (!isNaN(lon) && !isNaN(lat)) {
-        let targetTop = 50 - (lat / 90) * 50;
-        let targetLeft = 50 + (lon / 90) * 50;
-        targetLeft = Math.max(0, Math.min(100, targetLeft));
-        targetTop = Math.max(0, Math.min(100, targetTop));
-        cmeMarker.style.top = `${targetTop}%`;
-        cmeMarker.style.left = `${targetLeft}%`;
-        cmeMarker.style.display = 'block';
-    } else {
-        cmeMarker.style.display = 'none';
-    }
+    positionMarker(cmeMarker, lat, lon, cme.level);
     
     const fields = [
         { label: t("detailThreatLevel"), value: `<span style="color: ${textColor}; font-weight:800">${tLevels(cme.level)}</span>` },
@@ -500,29 +605,9 @@ function showFlrDetails(flr) {
     flrDetailTitle.innerText = `${t('flareDetailsTitle')}: ${flr.flare_id || t('unknown')}`;
     const textColor = colorMap[flr.level] || colorMap["UNKNOWN"];
     
-    // Position marker
     const lat = parseFloat(flr.latitude);
     const lon = parseFloat(flr.longitude);
-    
-    const markerContrastMap = {
-        "SAFE": "#22c55e", "LOW": "#3b82f6", "MEDIUM": "#a855f7",
-        "HIGH": "#000000", "CRITICAL": "#ffffff", "UNKNOWN": "#64748b"
-    };
-    flrMarker.style.backgroundColor = markerContrastMap[flr.level] || markerContrastMap["UNKNOWN"];
-    flrMarker.style.border = flr.level === "CRITICAL" ? "3px solid #ef4444" : "3px solid #ffffff";
-    flrMarker.style.boxShadow = "0 0 15px rgba(0,0,0,0.9)";
-    
-    if (!isNaN(lat) && !isNaN(lon)) {
-        let targetTop = 50 - (lat / 90) * 50;
-        let targetLeft = 50 + (lon / 90) * 50;
-        targetTop = Math.max(0, Math.min(100, targetTop));
-        targetLeft = Math.max(0, Math.min(100, targetLeft));
-        flrMarker.style.top = `${targetTop}%`;
-        flrMarker.style.left = `${targetLeft}%`;
-        flrMarker.style.display = 'block';
-    } else {
-        flrMarker.style.display = 'none';
-    }
+    positionMarker(flrMarker, lat, lon, flr.level);
     
     const fields = [
         { label: t("detailThreatLevel"), value: `<span style="color: ${textColor}; font-weight:800">${tLevels(flr.level)}</span>` },
