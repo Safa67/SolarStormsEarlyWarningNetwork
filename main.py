@@ -214,8 +214,10 @@ def _save_to_db(db: Session, result: dict):
             key=lambda s: level_order.index(s) if s in level_order else 0,
             default="SAFE"
         ),
-        final_level = result.get("final_level", "SAFE"),
-        determiner  = result.get("determiner"),
+        final_level    = result.get("final_level", "SAFE"),
+        forecast_level = result.get("forecast_level", "SAFE"),
+        forecast_description = result.get("forecast_description"),
+        determiner     = result.get("determiner"),
     ))
     db.commit()
 
@@ -301,13 +303,15 @@ def threat_history(
     )
     return [
         {
-            "time":        k.record_time.strftime("%d.%m.%Y %H:%M"),
-            "noaa_level":  k.noaa_level,
-            "cme_level":   k.cme_level,
-            "kp_level":    k.kp_level,
-            "flare_level": k.flare_level,
-            "final_level": k.final_level,
-            "determiner":  k.determiner,
+            "time":           k.record_time.strftime("%d.%m.%Y %H:%M"),
+            "noaa_level":     k.noaa_level,
+            "cme_level":      k.cme_level,
+            "kp_level":       k.kp_level,
+            "flare_level":    k.flare_level,
+            "final_level":    k.final_level,
+            "forecast_level": k.forecast_level,
+            "forecast_desc":  k.forecast_description,
+            "determiner":     k.determiner,
         }
         for k in records
     ]

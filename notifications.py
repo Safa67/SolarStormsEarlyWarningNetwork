@@ -67,11 +67,11 @@ def send_start_screen(chat_id: int):
         f"Sistemimiz Dünya'yı etkileyebilecek her türlü uzay hava durumu olayını 7/24 takip eder ve kritik bir durum tespit edildiğinde sizi **anında bu hat üzerinden** bilgilendirir.\n"
         f"\n"
         f"📢 <b>Neler Alacaksınız?</b>\n"
-        f"• Erken uyarılar (1-4 gün öncesinden)\n"
-        f"• Acil durum bildirimleri (30-60 dakika öncesinden)\n"
-        f"• Aktif fırtına güncellemeleri\n"
+        f"• 72 saatlik erken uyarılar (CME)\n"
+        f"• Şok dalgası varış bildirimleri\n"
+        f"• Aktif manyetik fırtına güncellemeleri\n"
         f"\n"
-        f"Herhangi bir işlem yapmanıza gerek yoktur. Bir tehdit durumunda bildirim alacaksınız."
+        f"Herhangi bir işlem yapmanıza gerek yoktur. Bir tehdit durumunda tahmin seviyeleri güncellenecek ve tarafınıza bildirilecektir."
     )
 
     try:
@@ -169,7 +169,7 @@ def check_tier1(db: Session, cme_list: list):
             f"\n"
             f"📊 CME Hızı: <b>{speed} km/s</b>\n"
             f"🎯 Yön: <b>{alignment}</b> — {details}\n"
-            f"⚠️ Tehdit: <b>{level}</b>{gb_text}\n"
+            f"🔭 72 Saatlik Tahmin: <b>{level} Risk</b>{gb_text}\n"
             f"{eta_text}\n"
             f"\n"
             f"🛰️ Etkilenen hedefler: {targets}\n"
@@ -239,7 +239,7 @@ def check_tier2(db: Session, cme_list: list):
             f"📅 Tahmini Varış: <b>{arrival_str}</b>\n"
             f"⏳ Kalan süre: <b>~{hours_remaining:.0f} saat</b>\n"
             f"📊 Hız: {speed} km/s\n"
-            f"⚠️ Tehdit: <b>{level}</b>\n"
+            f"📋 72 Saatlik Tahmin: <b>{level} Risk</b>\n"
             f"\n"
             f"📋 Öneriler:\n"
             f"• Hassas elektronik cihazların yedeklerini alın\n"
@@ -372,7 +372,7 @@ def check_tier4(db: Session, kp_data: dict, final_level: str):
         f"Dünya'da {'güçlü bir manyetik fırtına' if kp >= 7 else 'manyetik fırtına'} devam ediyor.\n"
         f"\n"
         f"🧲 Kp-Index: <b>{kp:.1f}</b> ({g_scale} — {g_desc})\n"
-        f"⚠️ Genel Tehdit: <b>{final_level}</b>\n"
+        f"📊 72 Saatlik Tahmin: <b>{final_level} Risk</b>\n"
         f"\n"
         f"⚡ Olası etkiler:\n"
     )

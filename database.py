@@ -99,14 +99,16 @@ class SolarFlare(Base):
 class ThreatHistory(Base):
     __tablename__ = "threat_history"
 
-    id            = Column(Integer, primary_key=True, index=True)
-    record_time   = Column(DateTime, default=datetime.utcnow, index=True)
-    noaa_level    = Column(String(20), default="SAFE")
-    cme_level     = Column(String(20), default="SAFE")
-    kp_level      = Column(String(20), default="SAFE")
-    flare_level   = Column(String(20), default="SAFE")
-    final_level   = Column(String(20), default="SAFE")
-    determiner    = Column(String(30), nullable=True)
+    id                  = Column(Integer, primary_key=True, index=True)
+    record_time         = Column(DateTime, default=datetime.utcnow, index=True)
+    noaa_level          = Column(String(20), default="SAFE")
+    cme_level           = Column(String(20), default="SAFE")
+    kp_level            = Column(String(20), default="SAFE")
+    flare_level         = Column(String(20), default="SAFE")
+    final_level         = Column(String(20), default="SAFE")        # Deprecated: Current consolidated level
+    forecast_level      = Column(String(20), default="SAFE")        # New: 72-hour predicted threat
+    forecast_description = Column(Text, nullable=True)               # New: Summary of why the forecast is X
+    determiner          = Column(String(30), nullable=True)
 
 
 # ── Table 6: Notification Log ────────────────────────────
