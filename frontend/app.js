@@ -6,7 +6,7 @@ const i18n = {
     en: {
         appTitle: "ASA Space Weather",
         loading: "Loading...",
-        finalThreat: "Final Threat Level",
+        finalThreat: "72-Hour Forecast",
         systemStarting: "System Starting...",
         magField: "Magnetic Field (Bz)",
         solarOrientation: "Solar Wind Orientation",
@@ -73,7 +73,7 @@ const i18n = {
         latText: "Lat",
         lonText: "Longitude",
         lblNow: "NOW (Kp):",
-        lblFuture: "PREDICTED (ASA):",
+        lblFuture: "72h FORECAST (ASA):",
         
         impSat: "Satellites", impGrid: "Power Grid", impRadio: "Comms (HF)", impGps: "Navigation",
         impact_sat_SAFE: "Optimal conditions", impact_grid_SAFE: "No impact detected", impact_radio_SAFE: "Stable bands", impact_gps_SAFE: "Precision nominal",
@@ -86,7 +86,7 @@ const i18n = {
     tr: {
         appTitle: "ASA Uzay Hava Durumu",
         loading: "Yükleniyor...",
-        finalThreat: "Nihai Tehdit Seviyesi",
+        finalThreat: "72 Saatlik Tahmin",
         systemStarting: "Sistem Başlatılıyor...",
         magField: "Manyetik Alan (Bz)",
         solarOrientation: "Güneş Rüzgarı Yönü",
@@ -152,7 +152,7 @@ const i18n = {
         latText: "Enlem",
         lonText: "Boylam",
         lblNow: "ŞU AN (Kp):",
-        lblFuture: "TAHMİN (ASA):",
+        lblFuture: "72s TAHMİN (ASA):",
         
         impSat: "Uydular", impGrid: "Elektrik Şb.", impRadio: "İletişim (HF)", impGps: "Navigasyon",
         impact_sat_SAFE: "Optimal koşullar", impact_grid_SAFE: "Etki gözlenmedi", impact_radio_SAFE: "Bantlar stabil", impact_gps_SAFE: "Hassasiyet normal",
@@ -269,10 +269,10 @@ function setupWebSocket() {
 }
 
 function updateDashboard(data) {
-    if (!data || !data.final_level) return;
+    if (!data) return;
 
     // 1. Main Banner
-    const newTarget = data.final_level;
+    const newTarget = data.forecast_level || data.final_level; // Use forecast
     const localizedLevel = tLevels(newTarget);
     threatLevelEl.innerText = localizedLevel;
     
@@ -282,7 +282,10 @@ function updateDashboard(data) {
     };
 
     threatLevelEl.className = `threat-level ${classMap[newTarget] || 'level-unknown'}`;
-    threatDescEl.innerText = `${t('determiner')}: ${data.determiner || '—'} | ${t('lastUpdate')}: ${data.timestamp}`;
+    
+    // Use forecast description if available, else determiner
+    const descText = data.forecast_description ? data.forecast_description : (`${t('determiner')}: ${data.determiner || '—'}`);
+    threatDescEl.innerText = `${descText} | ${t('lastUpdate')}: ${data.timestamp}`;
 
     // Alert Modal Logic
     if (["HIGH", "CRITICAL", "EXTREME"].includes(newTarget) && newTarget !== currentThreatLevel && currentThreatLevel !== null) {
@@ -297,7 +300,7 @@ function updateDashboard(data) {
         "HIGH": "val-high", "CRITICAL": "val-critical", "EXTREME": "val-extreme", "UNKNOWN": "val-safe"
     };
     const nowLevel = (data.kp && data.kp.level) ? data.kp.level : "SAFE";
-    const futureLevel = data.final_level || "SAFE";
+    const futureLevel = data.forecast_level || data.final_level || "SAFE";
 
     ["sat", "grid", "radio", "gps"].forEach(sys => {
         const cardEl = document.getElementById(`impact-${sys}`);
