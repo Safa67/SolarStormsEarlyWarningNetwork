@@ -1,4 +1,4 @@
-# 🛰️ ASA — Solar Storms Early Warning Network
+# ASA — Solar Storms Early Warning Network
 ### (Advanced Space Analytics & Early Warning System)
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -10,26 +10,26 @@ ASA, NASA ve NOAA'dan gelen multi-spektral verileri işleyerek, Dünya'yı etkil
 
 ---
 
-## 🛠️ Sistem Mimarisi & Teknik Detaylar
+## Sistem Mimarisi & Teknik Detaylar
 
 ASA, monolitik bir yapıdan ziyade, veri çekme (Ingestion), analiz (Analysis) ve bildirim (Notification) katmanlarından oluşan modüler bir mimariye sahiptir.
 
-### 🏗️ Genel Akış (Data Pipeline)
+### Genel Akış (Data Pipeline)
 ```mermaid
 graph TD
-    subgraph Veri Kaynakları
+    subgraph VK ["Veri Kaynakları"]
         NASA[NASA DONKI - CME/Flare]
         NOAA_S[NOAA DSCOVR - Mag/Plasma]
         NOAA_K[NOAA Kp-Index]
     end
 
-    subgraph Veri Motoru (Analiz)
+    subgraph VM ["Veri Motoru (Analiz)"]
         Input[Raw Data Ingestion] --> ML[Machine Learning Kp Prediction]
         Input --> Impact[Geometric Impact Analysis - ENLIL]
         Input --> Stats[Statistical Analysis - Bz/Speed/Density]
     end
 
-    subgraph Sunum & Uyarı
+    subgraph SU ["Sunum & Uyarı"]
         Stats --> WS[WebSocket Real-time Stream]
         Stats --> DB[(SQLite Persistence)]
         Stats --> TG[Telegram Bot Notification]
@@ -37,7 +37,7 @@ graph TD
     end
 ```
 
-### 🧠 Analiz Metodolojisi
+### Analiz Metodolojisi
 Sistem, tehdit seviyesini belirlemek için **Ağırlıklı Puanlama Algoritması (Weighted Scoring)** kullanır:
 - **NOAA Canlı Veri (%40):** DSCOVR uydusundan gelen anlık Bz (manyetik alan bileşeni), hız ve yoğunluk verileri.
 - **NASA CME Tahmini (%25):** ENLIL modellerinden gelen Earth-Impact (Dünya Etkisi) bayrakları ve şok varış süreleri.
@@ -46,17 +46,17 @@ Sistem, tehdit seviyesini belirlemek için **Ağırlıklı Puanlama Algoritması
 
 ---
 
-## 🚀 Öne Çıkan Özellikler
+## Öne Çıkan Özellikler
 
-- **🔮 72 Saatlik Proaktif Tahmin:** Sadece anlık durumu değil, ENLIL model çıktılarını analiz ederek önümüzdeki 3 günün risk haritasını çıkarır.
-- **🤖 ML Destekli Kp Tahmini:** `Scikit-learn` ile eğitilmiş model, güneş rüzgarı parametrelerini kullanarak anlık Kp değerini tahmin eder (0-9 ölçeğinde).
-- **📡 L1 Noktası Gecikme Analizi:** Güneş rüzgarı hızına bağlı olarak, fırtınanın L1 noktasından Dünya'ya varış süresini dinamik olarak hesaplar.
-- **🖼️ SDO Entegrasyonu:** NASA Solar Dynamics Observatory'den gelen en güncel HMI/AIA görüntülerini işleyerek görsel analiz sunar.
-- **🔔 Çok Katmanlı Bildirim:** Kritik eşik aşıldığında (K > 5 veya Bz < -10nT) anında Telegram üzerinden teknik detayları içeren uyarılar gönderir.
+- **72 Saatlik Proaktif Tahmin:** Sadece anlık durumu değil, ENLIL model çıktılarını analiz ederek önümüzdeki 3 günün risk haritasını çıkarır.
+- **ML Destekli Kp Tahmini:** `Scikit-learn` ile eğitilmiş model, güneş rüzgarı parametrelerini kullanarak anlık Kp değerini tahmin eder (0-9 ölçeğinde).
+- **L1 Noktası Gecikme Analizi:** Güneş rüzgarı hızına bağlı olarak, fırtınanın L1 noktasından Dünya'ya varış süresini dinamik olarak hesaplar.
+- **SDO Entegrasyonu:** NASA Solar Dynamics Observatory'den gelen en güncel HMI/AIA görüntülerini işleyerek görsel analiz sunar.
+- **Çok Katmanlı Bildirim:** Kritik eşik aşıldığında (K > 5 veya Bz < -10nT) anında Telegram üzerinden teknik detayları içeren uyarılar gönderir.
 
 ---
 
-## 📦 Kurulum ve Çalıştırma
+## Kurulum ve Çalıştırma
 
 ### 1. Ortamın Hazırlanması
 ```bash
@@ -90,7 +90,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
-## 🔗 API Referansı
+## API Referansı
 
 | Endpoint | Metot | Açıklama |
 | :--- | :---: | :--- |
@@ -101,7 +101,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
-## 🧬 Proje Yapı Taşı (Core Files)
+## Proje Yapı Taşı (Core Files)
 
 - `main.py`: FastAPI uygulama iskeleti ve WebSocket yönetimi.
 - `veri_motoru.py`: NASA/NOAA API entegrasyonu ve ağırlaştırılmış analiz algoritmaları.
@@ -111,7 +111,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ---
 
-## 🤝 Katkıda Bulunma ve Lisans
+## Katkıda Bulunma ve Lisans
 
 Bu proje bir Hackathon ürünüdür. Veri setleri ve API desteği için **NASA DONKI** ve **NOAA Space Weather Prediction Center** ekiplerine teşekkür ederiz.
 
